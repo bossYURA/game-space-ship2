@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Space Shooter - Combined</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050510;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff00;
+            --text-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        #level-board {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(5, 5, 16, 0.7);
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            text-shadow: 0 0 20px var(--neon-pink), 0 0 40px var(--neon-pink);
+            letter-spacing: 4px;
+        }
+
+        p {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            padding: 5px 15px;
+            border-radius: 5px;
+            color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 16px;
+            margin-top: 30px;
+            opacity: 0.8;
+        }
+
+        #skill-board {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        #shield-status {
+            color: #00f3ff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #hyper-drive-status {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+
+        /* Mobile Controls Styling */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #mobile-controls:not(.hidden) {
+            display: flex;
+        }
+
+        #joystick-container {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        #joystick-base {
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 243, 255, 0.1);
+            border: 2px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        #joystick-stick {
+            width: 50px;
+            height: 50px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        #action-buttons {
+            display: flex;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: transform 0.1s;
+            user-select: none;
+            text-align: center;
+        }
+
+        .mobile-btn:active {
+            transform: scale(0.9);
+        }
+
+        #btn-fire {
+            background: rgba(0, 243, 255, 0.2);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+            color: var(--neon-blue);
+        }
+
+        #btn-shield {
+            background: rgba(255, 0, 243, 0.2);
+            border: 2px solid var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        #btn-hyper {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        @media (max-width: 1024px) {
+            #mobile-controls:not(.hidden) {
+                display: flex;
+            }
+
+            #skill-board {
+                bottom: 180px;
+                left: 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ui-layer">
+        <div id="score-board">Score: <span id="score">0</span></div>
+        <div id="level-board">Level: <span id="level">1</span></div>
+        <div id="skill-board">
+            <div id="shield-status">SHIELD READY (PRESS F)</div>
+            <div id="hyper-drive-status">HYPER-DRIVE READY (PRESS E)</div>
+        </div>
+        <div id="start-screen" class="overlay">
+            <h1>NEON ASSAULT</h1>
+            <p>Press <span class="key">SPACE</span> or <span class="key">FIRE</span> to Start</p>
+            <p class="instructions">Arrows/WASD to Move • Space to Shoot</p>
+        </div>
+        <div id="game-over-screen" class="overlay hidden">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <p>Press <span class="key">SPACE</span> to Restart</p>
+        </div>
+
+        <div id="mobile-controls" class="hidden">
+            <div id="joystick-container">
+                <div id="joystick-base">
+                    <div id="joystick-stick"></div>
+                </div>
+            </div>
+            <div id="action-buttons">
+                <div id="btn-fire" class="mobile-btn">FIRE</div>
+                <div id="btn-shield" class="mobile-btn">SHIELD</div>
+                <div id="btn-hyper" class="mobile-btn">HYPER</div>
+            </div>
+        </div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        /* Game Constants */
+        const FPS = 60;
+        const FRICTION = 0.7;
+        const SHIP_SIZE = 30;
+        const TURN_SPEED = 180;
+        const THRUST = 2.5;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let gameState = 'START';
+        let score = 0;
+
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            KeyW: false,
+            KeyA: false,
+            KeyS: false,
+            KeyD: false,
+            KeyF: false,
+            KeyE: false,
+            Space: false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.ArrowUp = true;
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') keys.ArrowDown = true;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.ArrowLeft = true;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.ArrowRight = true;
+            if (e.code === 'KeyF') { if (gameState === 'PLAYING') keys.KeyF = true; }
+            if (e.code === 'KeyE') { if (gameState === 'PLAYING') keys.KeyE = true; }
+            if (e.code === 'Space') {
+                if (gameState === 'START' || gameState === 'GAMEOVER') {
+                    startGame();
+                } else {
+                    keys.Space = true;
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowUp' || e.code === 'KeyW') keys.ArrowUp = false;
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') keys.ArrowDown = false;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.ArrowLeft = false;
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.ArrowRight = false;
+            if (e.code === 'KeyF') keys.KeyF = false;
+            if (e.code === 'KeyE') keys.KeyE = false;
+            if (e.code === 'Space') keys.Space = false;
+        });
+
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const mobileControls = document.getElementById('mobile-controls');
+        const joystickStick = document.getElementById('joystick-stick');
+        const joystickBase = document.getElementById('joystick-base');
+
+        if (isTouchDevice) {
+            mobileControls.classList.remove('hidden');
+            let joystickActive = false;
+            let joystickTouchId = null;
+            let joystickCenter = { x: 0, y: 0 };
+            const maxDistance = 40;
+
+            joystickBase.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                joystickActive = true;
+                joystickTouchId = touch.identifier;
+                const rect = joystickBase.getBoundingClientRect();
+                joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            }, { passive: false });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!joystickActive) return;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === joystickTouchId) {
+                        const dx = touch.clientX - joystickCenter.x;
+                        const dy = touch.clientY - joystickCenter.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx);
+                        const limitedDist = Math.min(dist, maxDistance);
+                        const stickX = limitedDist * Math.cos(angle);
+                        const stickY = limitedDist * Math.sin(angle);
+                        joystickStick.style.transform = `translate(${stickX}px, ${stickY}px)`;
+                        keys.ArrowLeft = (dx < -15);
+                        keys.ArrowRight = (dx > 15);
+                        keys.ArrowUp = (dy < -15);
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            window.addEventListener('touchend', (e) => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const touch = e.changedTouches[i];
+                    if (touch.identifier === joystickTouchId) {
+                        joystickActive = false;
+                        joystickTouchId = null;
+                        joystickStick.style.transform = 'translate(0px, 0px)';
+                        keys.ArrowLeft = false;
+                        keys.ArrowRight = false;
+                        keys.ArrowUp = false;
+                        break;
+                    }
+                }
+            });
+
+            const btnFire = document.getElementById('btn-fire');
+            const btnShield = document.getElementById('btn-shield');
+            const btnHyper = document.getElementById('btn-hyper');
+
+            const handleBtn = (btn, key, start = true) => {
+                btn.addEventListener(start ? 'touchstart' : 'touchend', (e) => {
+                    e.preventDefault();
+                    if (key === 'Space' && start && (gameState === 'START' || gameState === 'GAMEOVER')) {
+                        startGame();
+                    } else {
+                        keys[key] = start;
+                    }
+                }, { passive: false });
+            };
+
+            handleBtn(btnFire, 'Space', true);
+            handleBtn(btnFire, 'Space', false);
+            handleBtn(btnShield, 'KeyF', true);
+            handleBtn(btnShield, 'KeyF', false);
+            handleBtn(btnHyper, 'KeyE', true);
+            handleBtn(btnHyper, 'KeyE', false);
+        }
+
+        class Ship {
+            constructor() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height / 2;
+                this.r = SHIP_SIZE / 2;
+                this.a = 90 / 180 * Math.PI;
+                this.rot = 0;
+                this.thrusting = false;
+                this.thrust = { x: 0, y: 0 };
+                this.canShoot = true;
+                this.lasers = [];
+                this.shieldActive = false;
+                this.shieldTime = 0;
+                this.shieldCooldown = 0;
+                this.shieldMaxTime = 3 * FPS;
+                this.shieldMaxCooldown = 10 * FPS;
+                this.hyperDriveCooldown = 0;
+                this.hyperDriveMaxCooldown = 5 * FPS;
+                this.trail = [];
+            }
+
+            shoot() {
+                if (this.canShoot && this.lasers.length < 10) {
+                    this.lasers.push(new Laser(
+                        this.x + 4 / 3 * this.r * Math.cos(this.a),
+                        this.y - 4 / 3 * this.r * Math.sin(this.a),
+                        this.a
+                    ));
+                    this.canShoot = false;
+                    setTimeout(() => this.canShoot = true, 250);
+                }
+            }
+
+            update() {
+                if (keys.ArrowLeft) this.rot = TURN_SPEED / 180 * Math.PI / FPS;
+                else if (keys.ArrowRight) this.rot = -TURN_SPEED / 180 * Math.PI / FPS;
+                else this.rot = 0;
+                this.a += this.rot;
+
+                if (keys.KeyF && this.shieldCooldown === 0 && !this.shieldActive) {
+                    this.shieldActive = true;
+                    this.shieldTime = this.shieldMaxTime;
+                    this.shieldCooldown = this.shieldMaxCooldown;
+                }
+                if (this.shieldActive) {
+                    this.shieldTime--;
+                    if (this.shieldTime <= 0) this.shieldActive = false;
+                }
+                if (this.shieldCooldown > 0) this.shieldCooldown--;
+
+                if (keys.KeyE && this.hyperDriveCooldown === 0) {
+                    for (let i = 0; i < 5; i++) {
+                        this.trail.push({
+                            x: this.x + (i * 30 * Math.cos(this.a)),
+                            y: this.y - (i * 30 * Math.sin(this.a)),
+                            a: this.a,
+                            life: 1.0
+                        });
+                    }
+                    this.x += 150 * Math.cos(this.a);
+                    this.y -= 150 * Math.sin(this.a);
+                    this.hyperDriveCooldown = this.hyperDriveMaxCooldown;
+                }
+                if (this.hyperDriveCooldown > 0) this.hyperDriveCooldown--;
+
+                for (let i = this.trail.length - 1; i >= 0; i--) {
+                    this.trail[i].life -= 0.05;
+                    if (this.trail[i].life <= 0) this.trail.splice(i, 1);
+                }
+
+                let shieldStatus = document.getElementById('shield-status');
+                if (shieldStatus) {
+                    if (this.shieldCooldown > 0) {
+                        shieldStatus.innerText = `SHIELD COOLDOWN: ${Math.ceil(this.shieldCooldown / FPS)}s`;
+                        shieldStatus.style.color = '#ff3300';
+                    } else {
+                        shieldStatus.innerText = 'SHIELD READY (PRESS F)';
+                        shieldStatus.style.color = '#00f3ff';
+                    }
+                }
+                let hdStatus = document.getElementById('hyper-drive-status');
+                if (hdStatus) {
+                    if (this.hyperDriveCooldown > 0) {
+                        hdStatus.innerText = `HYPER-DRIVE COOLDOWN: ${Math.ceil(this.hyperDriveCooldown / FPS)}s`;
+                        hdStatus.style.color = '#ff3300';
+                    } else {
+                        hdStatus.innerText = 'HYPER-DRIVE READY (PRESS E)';
+                        hdStatus.style.color = '#ff00ff';
+                    }
+                }
+
+                if (keys.ArrowUp) {
+                    this.thrusting = true;
+                    this.thrust.x += THRUST * Math.cos(this.a) / FPS;
+                    this.thrust.y -= THRUST * Math.sin(this.a) / FPS;
+                } else if (keys.ArrowDown) {
+                    this.thrusting = true;
+                    this.thrust.x -= (THRUST / 2) * Math.cos(this.a) / FPS;
+                    this.thrust.y += (THRUST / 2) * Math.sin(this.a) / FPS;
+                } else {
+                    this.thrusting = false;
+                    this.thrust.x -= FRICTION * this.thrust.x / FPS;
+                    this.thrust.y -= FRICTION * this.thrust.y / FPS;
+                }
+                this.x += this.thrust.x;
+                this.y += this.thrust.y;
+
+                if (this.x < 0 - this.r) this.x = canvas.width + this.r;
+                else if (this.x > canvas.width + this.r) this.x = 0 - this.r;
+                if (this.y < 0 - this.r) this.y = canvas.height + this.r;
+                else if (this.y > canvas.height + this.r) this.y = 0 - this.r;
+
+                if (keys.Space) this.shoot();
+                for (let i = this.lasers.length - 1; i >= 0; i--) {
+                    this.lasers[i].update();
+                    if (this.lasers[i].dist > canvas.width * 0.8) this.lasers.splice(i, 1);
+                }
+            }
+
+            draw() {
+                for (let i = 0; i < this.lasers.length; i++) this.lasers[i].draw();
+                ctx.lineWidth = SHIP_SIZE / 20;
+                this.trail.forEach(t => {
+                    ctx.strokeStyle = `rgba(255, 0, 255, ${t.life})`;
+                    ctx.lineWidth = (SHIP_SIZE / 20) * t.life;
+                    ctx.beginPath();
+                    ctx.moveTo(t.x + 4 / 3 * this.r * Math.cos(t.a), t.y - 4 / 3 * this.r * Math.sin(t.a));
+                    ctx.lineTo(t.x - this.r * (2 / 3 * Math.cos(t.a) + Math.sin(t.a)), t.y + this.r * (2 / 3 * Math.sin(t.a) - Math.cos(t.a)));
+                    ctx.lineTo(t.x - this.r * (2 / 3 * Math.cos(t.a) - Math.sin(t.a)), t.y + this.r * (2 / 3 * Math.sin(t.a) + Math.cos(t.a)));
+                    ctx.closePath(); ctx.stroke();
+                });
+                ctx.strokeStyle = '#ffffff'; ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                let noseX = this.x + 4 / 3 * this.r * Math.cos(this.a);
+                let noseY = this.y - 4 / 3 * this.r * Math.sin(this.a);
+                ctx.moveTo(noseX, noseY);
+                ctx.lineTo(this.x - this.r * (2 / 3 * Math.cos(this.a) + 1.2 * Math.sin(this.a)), this.y + this.r * (2 / 3 * Math.sin(this.a) - 1.2 * Math.cos(this.a)));
+                ctx.lineTo(this.x - this.r * (1 / 3 * Math.cos(this.a) + 0.5 * Math.sin(this.a)), this.y + this.r * (1 / 3 * Math.sin(this.a) - 0.5 * Math.cos(this.a)));
+                ctx.lineTo(this.x - this.r * (1 / 3 * Math.cos(this.a) - 0.5 * Math.sin(this.a)), this.y + this.r * (1 / 3 * Math.sin(this.a) + 0.5 * Math.cos(this.a)));
+                ctx.lineTo(this.x - this.r * (2 / 3 * Math.cos(this.a) - 1.2 * Math.sin(this.a)), this.y + this.r * (2 / 3 * Math.sin(this.a) + 1.2 * Math.cos(this.a)));
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+
+                ctx.fillStyle = '#00daff'; ctx.beginPath();
+                ctx.ellipse(this.x + 0.2 * this.r * Math.cos(this.a), this.y - 0.2 * this.r * Math.sin(this.a), this.r * 0.4, this.r * 0.2, -this.a, 0, Math.PI * 2);
+                ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.stroke();
+
+                if (this.thrusting) {
+                    let gradient = ctx.createRadialGradient(this.x - this.r * Math.cos(this.a), this.y + this.r * Math.sin(this.a), 0, this.x - this.r * 1.5 * Math.cos(this.a), this.y + this.r * 1.5 * Math.sin(this.a), this.r * 1.2);
+                    gradient.addColorStop(0, '#ffcc00'); gradient.addColorStop(0.5, 'rgba(255, 68, 0, 0.8)'); gradient.addColorStop(1, 'transparent');
+                    ctx.fillStyle = gradient; ctx.beginPath();
+                    ctx.moveTo(this.x - this.r * (0.8 * Math.cos(this.a) + 0.3 * Math.sin(this.a)), this.y + this.r * (0.8 * Math.sin(this.a) - 0.3 * Math.cos(this.a)));
+                    ctx.lineTo(this.x - this.r * 2.5 * Math.cos(this.a), this.y + this.r * 2.5 * Math.sin(this.a));
+                    ctx.lineTo(this.x - this.r * (0.8 * Math.cos(this.a) - 0.3 * Math.sin(this.a)), this.y + this.r * (0.8 * Math.sin(this.a) + 0.3 * Math.cos(this.a)));
+                    ctx.closePath(); ctx.fill();
+                }
+
+                if (this.shieldActive) {
+                    ctx.strokeStyle = '#00f3ff'; ctx.lineWidth = 2; ctx.shadowBlur = 15; ctx.shadowColor = '#00f3ff';
+                    let pulse = Math.sin(Date.now() / 100) * 5;
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.r * 1.8 + pulse, 0, Math.PI * 2); ctx.stroke();
+                    ctx.fillStyle = 'rgba(0, 243, 255, 0.1)'; ctx.fill(); ctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        class Laser {
+            constructor(x, y, a) {
+                this.x = x; this.y = y;
+                this.xv = 500 * Math.cos(a) / FPS; this.yv = -500 * Math.sin(a) / FPS; this.dist = 0;
+            }
+            update() {
+                this.x += this.xv; this.y += this.yv; this.dist += Math.sqrt(this.xv * this.xv + this.yv * this.yv);
+                if (this.x < 0) this.x = canvas.width; else if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height; else if (this.y > canvas.height) this.y = 0;
+            }
+            draw() {
+                ctx.fillStyle = '#00f3ff'; ctx.beginPath(); ctx.arc(this.x, this.y, SHIP_SIZE / 15, 0, Math.PI * 2, false); ctx.fill();
+                ctx.shadowBlur = 10; ctx.shadowColor = '#00f3ff'; ctx.fill(); ctx.shadowBlur = 0;
+            }
+        }
+
+        class Asteroid {
+            constructor(x, y, r) {
+                this.x = x; this.y = y; this.r = r || Math.ceil(Math.random() * 30 + 20);
+                this.xv = Math.random() * 50 / FPS * (Math.random() < 0.5 ? 1 : -1);
+                this.yv = Math.random() * 50 / FPS * (Math.random() < 0.5 ? 1 : -1);
+                this.a = Math.random() * Math.PI * 2;
+                this.vert = Math.floor(Math.random() * 10 + 5);
+                this.offs = []; for (let i = 0; i < this.vert; i++) this.offs.push(Math.random() * 0.4 + 0.8);
+            }
+            update() {
+                this.x += this.xv; this.y += this.yv;
+                if (this.x < 0 - this.r) this.x = canvas.width + this.r; else if (this.x > canvas.width + this.r) this.x = 0 - this.r;
+                if (this.y < 0 - this.r) this.y = canvas.height + this.r; else if (this.y > canvas.height + this.r) this.y = 0 - this.r;
+            }
+            draw() {
+                ctx.strokeStyle = '#ff00aa'; ctx.lineWidth = SHIP_SIZE / 20; ctx.beginPath();
+                for (let i = 0; i < this.vert; i++) ctx.lineTo(this.x + this.r * this.offs[i] * Math.cos(this.a + i * Math.PI * 2 / this.vert), this.y + this.r * this.offs[i] * Math.sin(this.a + i * Math.PI * 2 / this.vert));
+                ctx.closePath(); ctx.shadowBlur = 15; ctx.shadowColor = '#ff00aa'; ctx.stroke(); ctx.shadowBlur = 0;
+            }
+        }
+
+        class Bomb {
+            constructor(x, y) {
+                this.x = x; this.y = y; this.r = 25;
+                this.xv = Math.random() * 40 / FPS * (Math.random() < 0.5 ? 1 : -1); this.yv = Math.random() * 40 / FPS * (Math.random() < 0.5 ? 1 : -1);
+            }
+            update() {
+                this.x += this.xv; this.y += this.yv;
+                if (this.x < 0 - this.r) this.x = canvas.width + this.r; else if (this.x > canvas.width + this.r) this.x = 0 - this.r;
+                if (this.y < 0 - this.r) this.y = canvas.height + this.r; else if (this.y > canvas.height + this.r) this.y = 0 - this.r;
+            }
+            draw() {
+                ctx.strokeStyle = '#ff3300'; ctx.fillStyle = '#660000'; ctx.lineWidth = SHIP_SIZE / 20; ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, false); ctx.fill(); ctx.stroke();
+                ctx.shadowBlur = 20; ctx.shadowColor = '#ff3300'; ctx.stroke(); ctx.shadowBlur = 0;
+            }
+        }
+
+        let ship; let asteroids = []; let bombs = []; let level = 0; let particles = [];
+
+        function createAsteroids(numAsteroids, numBombs) {
+            asteroids = []; bombs = []; let x, y;
+            for (let i = 0; i < numAsteroids; i++) { do { x = Math.floor(Math.random() * canvas.width); y = Math.floor(Math.random() * canvas.height); } while (distBetweenPoints(ship.x, ship.y, x, y) < 150); asteroids.push(new Asteroid(x, y)); }
+            for (let i = 0; i < numBombs; i++) { do { x = Math.floor(Math.random() * canvas.width); y = Math.floor(Math.random() * canvas.height); } while (distBetweenPoints(ship.x, ship.y, x, y) < 150); bombs.push(new Bomb(x, y)); }
+        }
+
+        function newLevel() { level++; document.getElementById('level').innerText = level; createAsteroids(level + 5, Math.floor(level / 2) + 2); }
+        function distBetweenPoints(x1, y1, x2, y2) { return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)); }
+
+        function startGame() { ship = new Ship(); level = 0; newLevel(); gameState = 'PLAYING'; document.getElementById('start-screen').classList.add('hidden'); document.getElementById('game-over-screen').classList.add('hidden'); score = 0; updateScore(); }
+        function gameOver() { gameState = 'GAMEOVER'; document.getElementById('game-over-screen').classList.remove('hidden'); document.getElementById('final-score').innerText = score; }
+        function updateScore() { document.getElementById('score').innerText = score; }
+
+        function loop() {
+            ctx.fillStyle = '#050510'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (gameState === 'PLAYING') {
+                ship.update(); ship.draw();
+                for (let i = 0; i < asteroids.length; i++) { asteroids[i].update(); asteroids[i].draw(); }
+                for (let i = asteroids.length - 1; i >= 0; i--) {
+                    let ax = asteroids[i].x, ay = asteroids[i].y, ar = asteroids[i].r;
+                    for (let j = ship.lasers.length - 1; j >= 0; j--) {
+                        if (distBetweenPoints(ax, ay, ship.lasers[j].x, ship.lasers[j].y) < ar) {
+                            createExplosion(ax, ay, 10); ship.lasers.splice(j, 1); asteroids.splice(i, 1); score += 100; updateScore();
+                            if (asteroids.length === 0) newLevel(); break;
+                        }
+                    }
+                }
+                for (let i = 0; i < bombs.length; i++) { bombs[i].update(); bombs[i].draw(); }
+                for (let i = bombs.length - 1; i >= 0; i--) {
+                    let bx = bombs[i].x, by = bombs[i].y, br = bombs[i].r;
+                    for (let j = ship.lasers.length - 1; j >= 0; j--) {
+                        if (distBetweenPoints(bx, by, ship.lasers[j].x, ship.lasers[j].y) < br) {
+                            createExplosion(bx, by, 20); ship.lasers.splice(j, 1); bombs.splice(i, 1); score -= 500; updateScore(); break;
+                        }
+                    }
+                }
+                for (let i = 0; i < asteroids.length; i++) {
+                    if (distBetweenPoints(ship.x, ship.y, asteroids[i].x, asteroids[i].y) < ship.r + asteroids[i].r) {
+                        if (ship.shieldActive) { createExplosion(asteroids[i].x, asteroids[i].y, 10); asteroids.splice(i, 1); score += 50; updateScore(); if (asteroids.length === 0) newLevel(); break; }
+                        else { createExplosion(ship.x, ship.y, 30); gameOver(); break; }
+                    }
+                }
+                for (let i = 0; i < bombs.length; i++) {
+                    if (distBetweenPoints(ship.x, ship.y, bombs[i].x, bombs[i].y) < ship.r + bombs[i].r) {
+                        if (ship.shieldActive) { createExplosion(bombs[i].x, bombs[i].y, 15); bombs.splice(i, 1); break; }
+                        else { createExplosion(ship.x, ship.y, 40); gameOver(); break; }
+                    }
+                }
+                for (let i = particles.length - 1; i >= 0; i--) { particles[i].update(); particles[i].draw(); if (particles[i].life <= 0) particles.splice(i, 1); }
+            }
+            requestAnimationFrame(loop);
+        }
+
+        class Particle {
+            constructor(x, y) { this.x = x; this.y = y; this.xv = (Math.random() - 0.5) * (Math.random() * 200 + 50) / FPS; this.yv = (Math.random() - 0.5) * (Math.random() * 200 + 50) / FPS; this.r = Math.random() * 3 + 1; this.life = 1.0; this.decay = Math.random() * 0.05 + 0.02; }
+            update() { this.x += this.xv; this.y += this.yv; this.life -= this.decay; this.r -= 0.05; if (this.r < 0) this.r = 0; }
+            draw() { ctx.fillStyle = `rgba(255, 255, 255, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2, false); ctx.fill(); }
+        }
+        function createExplosion(x, y, num) { for (let i = 0; i < num; i++) particles.push(new Particle(x, y)); }
+
+        loop();
+    </script>
+</body>
+
+</html>
