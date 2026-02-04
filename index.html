@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Space Shooter</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="ui-layer">
+        <div id="score-board">Score: <span id="score">0</span></div>
+        <div id="level-board">Level: <span id="level">1</span></div>
+        <div id="skill-board">
+            <div id="shield-status">SHIELD READY (PRESS F)</div>
+            <div id="hyper-drive-status">HYPER-DRIVE READY (PRESS E)</div>
+        </div>
+        <div id="start-screen" class="overlay">
+            <h1>NEON ASSAULT</h1>
+            <p>Press <span class="key">SPACE</span> or <span class="key">FIRE</span> to Start</p>
+            <p class="instructions">Arrows/WASD to Move • Space to Shoot</p>
+        </div>
+        <div id="game-over-screen" class="overlay hidden">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <p>Press <span class="key">SPACE</span> to Restart</p>
+        </div>
+
+        <div id="mobile-controls" class="hidden">
+            <div id="joystick-container">
+                <div id="joystick-base">
+                    <div id="joystick-stick"></div>
+                </div>
+            </div>
+            <div id="action-buttons">
+                <div id="btn-fire" class="mobile-btn">FIRE</div>
+                <div id="btn-shield" class="mobile-btn">SHIELD</div>
+                <div id="btn-hyper" class="mobile-btn">HYPER</div>
+            </div>
+        </div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="game.js"></script>
+</body>
+
+</html>

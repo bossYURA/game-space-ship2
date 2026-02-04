@@ -1,0 +1,18 @@
+
+git add .
+git commit -m " commit"
+git push -u origin main
+
+
+
+
+
+
+
+
+
+
+
+git branch -M main
+git remote add origin https://github.com/bossYURA/game-space-ship2.git
+git push -u origin main
